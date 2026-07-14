@@ -1,834 +1,653 @@
-# 2026 여름 툴킷 — 위상·동역학·수송
+# Magnetic Field Line Chaos: Topology, Dynamics, and Transport
+### A summer toolkit — Summer 2026
 
-**핵심 질문: "자기장이 깨지면 열이 새는가?"**
+Reproduction and verification. No new physics is claimed; the value is in the
+measurement discipline and in one negative result, stated plainly.
 
-이 질문에 답하려면 세 개의 축이 필요하다:
-- **위상**: 벽(자기면)이 있는가
-- **동역학**: 궤도가 규칙적인가 카오스인가
-- **수송**: 열이 실제로 새는가
+**One question:**
 
-**★ 그리고 셋은 서로를 대체하지 못한다.**
+> When a magnetic field breaks, does the heat leak out?
 
----
+Answering it needs three distinct diagnostic axes, and none of them can stand in
+for another.
 
-## 여름의 구조
-
-### 1부 — 도구를 만들다 (§1)
-표준맵과 QUASR 진공 자기장에서 세 축의 도구를 구현하고 상호검증했다.
-
-**수송 축이 가속자 창에서 이상을 검출했고**(D/D_QL ≈ 619, R² 하락), **동역학 축이
-그 원인을 확인했다**(dig = 10.43, 규칙적) — 표준맵 K=6.9의 안정 가속자 섬.
-**★ 그리고 WBA는 Benettin Lyapunov와 99.99% 일치했다 — 같은 레포(sv-3), 다른 방법.**
-
-### 2부 — 실제 자기장에 붙이다, 그리고 실패하다 (§2)
-세 축을 QUASR 배위(104183)에 이식하려 했고, **세 번 실패했다.**
-
-**★ 그리고 그 실패들이 하나의 물리적 결론을 가리킨다:**
-
-> **진공 배위(β = 0)에는 갇힌 카오스가 거의 없다.
-> 갇힌 카오스는 유한 β의 산물이다.**
-
-**→ 진공 자기장은 수송을 잴 무대가 아니다. HINT이 필요하다. 히로시마다.**
-
-### 3부 — 그러면 어디서 재는가 (§3)
-축소 모델(Kallinikos-MacKay, Paul-Hudson-Helander)로 이동했다.
-**★ 그리고 거기에 문헌의 구멍이 있다.**
-
-Paul et al. (2022) 결론:
-> "our metric appears to be related to the converse KAM approach...
-> **We reserve such a comparison for future publication.**"
-
-**★ 2022년에 적혔고, 4년째 나오지 않았다.**
-
----
-
-## §1 — 도구를 만들다
-
-표준맵과 QUASR 진공 자기장에서 세 축의 도구를 구현했다.
-
-### 레포 지도
-
-| 라벨 | 레포 | 내용 | 커밋 |
-|---|---|---|---|
-| **D1** | **sv-2/`d1_standard_map`** | 표준맵 **확산지수 μ(K)** | 4bc1fbd |
-| **B2** | **sv-3** | WBA | ffe38da |
-| **B4 · D_FL · 배위 스캔** | **sv-2** | QUASR 진공 배위 | 0218c15 |
-| **C0–C3b** | **sv-4** | converse-KAM 3D, V_PD | 8a52ca1 |
-| **★ (별개)** | **★ sv-1** | 표준맵 **확산계수 D(K)** | ecd0c67 |
-
-GitHub: [sv-1](https://github.com/kmh21012799-cpu/sv-1) · [sv-2](https://github.com/kmh21012799-cpu/sv-2) · [sv-3](https://github.com/kmh21012799-cpu/sv-3) · [sv-4](https://github.com/kmh21012799-cpu/sv-4)
-
-**★★ 주의: sv-1은 "D1"이 아니다.**
-- **D1** (sv-2/d1) = 확산**지수** μ(K)
-- **sv-1** = 확산**계수** D(K)
-- ★ 같은 계(표준맵), 다른 양. — 이 혼동이 이전 "정정" 사고의 원인이었다.
-
-### 1.1 QUASR 파이프라인 (재현)
-
-**목적:** Davies et al. (2025) Table A1 재현. 툴 파이프라인 검증 전용.
-
-**결과: 통과 (부분).**
-
-- **104183 divertor X점을 3자리까지 재현:** 지수 −1, residue −1.932 (논문 −1.93), Lyapunov 2.264 (논문 2.26).
-- 이로써 코일 → Biot-Savart → Poincaré → 고정점 → Jacobian → residue → Lyapunov 전 경로가 검증됨.
-- **74609 / 1258083의 6행은 미확정.** 고정점이 LGMS 밖 열린 영역(74609) 또는 A=24 초소형 플라즈마(1258083)에 있어 맹목 탐색이 실패. **코드 오류가 아님** — 104183 정확 재현이 그 증거.
-
-**부산물 셋:**
-1. **논문 오타 발견.** 74608은 QUASR에 존재하지 않음(HTTP 404). 74609가 실재. Table A1의 라벨이 오타이고 본문 4.2절이 맞음.
-2. **NRD 흐름의 유한시간 발산.** ε_x < 0의 u² 항이 ~R³ 힘을 만들어 연속 흐름이 유한 시간에 특이점을 가짐. Punjabi-Boozer는 고정스텝 심플렉틱 맵(dφ = 2π/3600)으로 이를 우회. **논문에 명시되어 있지 않으며, 직접 부딪혀야 알 수 있는 사실.** 그리고 그 발산이 물리적으로 divertor의 "diversion"에 해당함.
-3. **1cm 격자법 검증.** InterpolatedField의 FD-Jacobian이 정확 Biot-Savart와 residue 6자리 일치. 논문 격자법이 residue/Lyapunov 계산에 충분함을 독립 확인.
-
-### 1.2 D1 (sv-2/d1_standard_map) — 표준맵 확산지수 (재현)
-
-**★ 출처: sv-2/`d1_standard_map`, 커밋 4bc1fbd**
-
-**목적:** 수송 축 확보. 표준맵에서 확산 지수 μ(K) 재현.
-
-**결과: 통과.**
-
-| K | μ | 영역 |
+| Axis | The question it asks | Tools |
 |---|---|---|
-| 0.5, 0.7, 0.9 | ~0 | KAM 벽, 전역 수송 없음 |
-| 0.9716 (K_c) | ~0 | 마지막 토러스 붕괴 |
-| 1.2 → 2.0 | → 1.0 | 정상 확산 |
-| 3.0, 6.9 | → 2.0 | 탄도 수송 |
+| **Topology** | Is there a wall (a flux surface)? | Poincaré, Greene residue, converse-KAM |
+| **Dynamics** | Is the orbit regular or chaotic? | Weighted Birkhoff Average (WBA), Lyapunov/FTLE |
+| **Transport** | Does heat actually leak? | diffusion exponent μ, effective volume V_PD |
 
-**★ 함정 1 — N 수렴: 아티팩트 아님으로 판정.**
+## Repository map
 
-문헌의 μ≈1.5가 유한시간 아티팩트일 가능성을 검정. K=6.9를 N=10⁷까지 추적 (2D 격자):
+The work lives in five repositories. One naming caution is worth stating up
+front, because confusing two of them caused a chain of mistaken "corrections"
+during the write-up.
 
-| N 구간 | μ |
+| Label | Repository | Contents | Commit |
+|---|---|---|---|
+| **D1** | sv-2/`d1_standard_map` | standard map, diffusion **exponent** μ(K) | `4bc1fbd` |
+| **B2** | sv-3 | Weighted Birkhoff Average | `ffe38da` |
+| B4, D_FL, config scan | sv-2 | QUASR vacuum configurations | `0218c15` |
+| C0–C3b | sv-4 | converse-KAM 3D, V_PD | `8a52ca1` |
+| *(separate)* | sv-1 | standard map, diffusion **coefficient** D(K) | `ecd0c67` |
+
+GitHub: [sv-1](https://github.com/kmh21012799-cpu/sv-1) ·
+[sv-2](https://github.com/kmh21012799-cpu/sv-2) ·
+[sv-3](https://github.com/kmh21012799-cpu/sv-3) ·
+[sv-4](https://github.com/kmh21012799-cpu/sv-4)
+
+> **sv-1 is not "D1".** D1 (sv-2/`d1_standard_map`) measures the diffusion
+> *exponent* μ(K); sv-1 measures the diffusion *coefficient* D(K). Same system,
+> different quantity.
+
+## Overview
+
+Part 1 builds the three axes on the standard map and on a QUASR vacuum field, and
+checks them against each other. Part 2 carries them to a real 3D vacuum
+configuration (104183), where three of the observables turned out not to measure
+what they appeared to — and the three failures pointed to a single physical
+conclusion. Part 3 moves to reduced models with a known answer key, and completes
+a comparison that Paul, Hudson & Helander (2022) deferred to "future publication."
+
+The headline of Part 2:
+
+> Vacuum configurations (β = 0) contain almost no confined chaos. Confined chaos
+> is a product of finite β.
+
+So a vacuum field is not the stage on which to measure transport; that requires a
+finite-β 3D equilibrium — HINT.
+
+---
+
+## Part 1 — Building the tools
+
+### 1.1 QUASR pipeline (reproduction)
+
+Reproduce Table A1 of Davies, Smiet, Punjabi, Boozer & Henneberg (2025,
+*Nucl. Fusion* **65**, 076018) as an end-to-end check of the tool chain
+(commit `2a7858a`, in sv-2).
+
+The full chain — QUASR coils → Biot–Savart → 1 cm interpolated field → Poincaré
+map → fixed point → Jacobian → residue → Lyapunov — was run on configuration
+104183 (a tokamak-like divertor case). Its two period-1 divertor X-points
+reproduce the paper to three significant figures.
+
+| Quantity | Paper | This work |
+|---|---|---|
+| Topological index | −1 | −1 |
+| Greene residue | −1.93 | −1.932 |
+| Lyapunov exponent | 2.26 | 2.264 |
+
+Three by-products:
+
+1. **A typo in the paper.** Table A1's label 74608 returns HTTP 404 from QUASR
+   and does not exist; the configuration in the body text (§4.2) is 74609.
+2. **Finite-time singularity of the NRD flow.** For ε_x < 0 the u² term produces
+   a force ~R³, so the continuous flow reaches a singularity in finite time;
+   Punjabi–Boozer sidestep this with a fixed-step symplectic map (dφ = 2π/3600).
+   This is not stated in the paper and is only found by hitting it — and the
+   divergence corresponds physically to the divertor's diversion.
+3. **The 1 cm grid method holds.** The finite-difference Jacobian of the
+   interpolated field agrees with exact Biot–Savart on the residue to six digits.
+
+The remaining six Table A1 rows (74609, 1258083) were not localized — their fixed
+points sit outside the LCFS (74609) or in an A=24 miniature plasma (1258083), and
+blind search did not converge. This is not a code error; the exact reproduction
+of 104183 is the evidence.
+
+### 1.2 D1 (sv-2/`d1_standard_map`) — diffusion exponent μ(K)
+
+Source: sv-2/`d1_standard_map`, commit `4bc1fbd`. Stand up the transport axis by
+reproducing the standard-map diffusion exponent μ(K), which reproduces the
+textbook structure.
+
+| K | μ | regime |
+|---|---|---|
+| 0.5, 0.7, 0.9 | ~0 | KAM wall, no global transport |
+| 0.9716 (K_c) | ~0 | last torus breaks |
+| 1.2 → 2.0 | → 1.0 | normal diffusion |
+| 3.0, 6.9 | → 2.0 | ballistic |
+
+**Trap 1 — N-convergence, ruled out.** The literature μ ≈ 1.5 might be a
+finite-time artifact. Tracking K = 6.9 to N = 10⁷ (2D grid):
+
+| N window | μ |
 |---|---|
 | 10³–10⁴ | 1.74 |
 | 10⁴–10⁵ | 1.93 |
 | 10⁵–10⁶ | 1.99 |
 | 10⁶–10⁷ | 1.98 |
 
-μ가 2.0에 포화하고 유지됨. **1로 수렴하지 않음.**
+μ saturates at 2.0 and stays there; it does not drift to 1. The cause
+(topology → transport): the m=1 accelerator fixed point at K=6.9, θ* = 1.9968, is
+elliptic (Tr = −0.85), a stable island. About 0.37% of orbits are permanently
+trapped and advance by Δp = 2π per step; their contribution
+0.0037 × (2πN)² ≈ 1.5×10¹³ matches the measured MSD(10⁷) = 1.26×10¹³. The
+super-diffusion is genuine ballistic transport from a stable island. The
+literature "μ → 1 for N ≥ 10⁷" is the contrast case — a K *without* a stable
+island (sticky/cantori Lévy) — and does not apply at K = 6.9.
 
-**원인 규명 (위상 → 수송):** K=6.9의 m=1 가속자 고정점 θ* = 1.9968이 타원형(Tr = −0.85) → **안정 섬**. 궤도의 **0.37%**가 영구 포획되어 매 스텝 Δp = 2π씩 등속 이동. 그 기여 0.0037 × (2πN)² ≈ 1.5×10¹³ 이 실측 MSD(10⁷) = 1.26×10¹³ 과 일치.
+**Trap 2 — symmetry line, confirmed real.** Initial conditions on the θ₀ = 0 line
+versus a 2D grid: at K = 3.0 the line gives μ = 1.0 while the grid gives μ = 2.0
+(a qualitatively different answer); at K = 6.9 the line is unusable (90% seed
+spread). The line misses the accelerator island's basin. (Independently confirmed
+by B2/sv-3, below.)
 
-**→ 초확산이 안정 섬에 의한 진짜 탄도 수송임.** 문헌의 "μ→1 수렴(N≥10⁷)"은 **안정 섬이 없는 K**(sticky/cantori Lévy 영역)에서 발생 — K=6.9엔 해당 안 됨. 두 경우가 다름.
+### 1.3 B2 (sv-3) — Weighted Birkhoff Average (reproduction)
 
-**★ 함정 2 — 대칭선: 실재 확인.**
+The last dynamics-axis tool — the WBA of Duignan & Meiss (2023, *Physica D*
+**449**, 133749), commit `ffe38da`. Three of four pass criteria met: weight
+normalisation C(w=1) = 142.2503757771 (paper 142.2503758), ∫g = 1; regular-orbit
+super-convergence dig ≈ 10–13; chaotic-sea dig ≈ 1–2.
 
-θ₀=0 선 IC vs 2D 격자 IC:
-- K=3.0: 선 μ = 1.0, 격자 μ = 2.0 → **정성적으로 다른 결론**
-- K=6.9: 선은 seed 분산 90%로 사용 불가
+**Two axes point at the same object — but this is not a cross-validation.** At
+K = 6.9, D1 (transport) detects the accelerator anomaly through the diffusion
+coefficient blowing up, and B2 (WBA) classifies the island interior as regular
+(median dig = 10.43) with area fraction 0.405% on a 500×500 grid (the total
+regular fraction, 0.406%, is essentially all this one island). The two agree, but
+the shared quantities — position θ* and trace — are analytic properties of the
+accelerator fixed point (sin θ* = 2π/K, Tr = 2 + K cos θ*), not independent
+measurements, and D1 only detects the island, it does not quantify it. sv-3's own
+record puts it precisely: WBA is an *"independent confirmation of the island D1
+identified by transport scaling,"* and *"No novelty, no discovery claimed."* The
+accurate statement is: the transport axis flagged an anomaly, and the dynamics
+axis confirmed its cause.
 
-**원인:** 선이 가속자 섬 basin을 통째로 놓침. (B2/sv-3에서 독립 확증 — 아래)
+The genuine independent cross-check is internal to sv-3: WBA and the Benettin
+(finite-time Lyapunov) classifier agree on 99.99% of 14,400 initial conditions at
+K = 6.9 — same repository, unrelated method. (Honestly, the speed advantage is
+modest — 1.24× at equal iteration count; WBA's real edge is machine-precision
+digits on regular orbits.)
 
-### 1.3 B2 — WBA 구현 (재현)
+**Symmetry-line trap (sv-3, K = 6.9).**
 
-**목적:** 동역학 축의 마지막 도구. Duignan & Meiss (2023) WBA 구현.
-
-**결과: 통과 (3/4 기준).**
-
-- **가중치 정규화 확인:** C(w=1) = 142.2503757771 (논문 142.2503758), ∫g = 1.
-- **규칙 궤도 초수렴 확인:** dig ≈ 10–13.
-- **카오스 판정 확인:** 카오스 바다 dig ≈ 1–2.
-
-**두 축이 같은 대상을 가리키다 (상호검증은 아니다)**
-
-**★ 표준맵 K = 6.9의 안정 가속자 섬.**
-
-**sv-1 (수송 축, 커밋 ecd0c67):**
-- 가속자 창(K ≈ 2π)에서 확산계수가 폭발한다: **D/D_QL ≈ 619** (K=6.4)
-- ★ 그리고 R²가 0.971로 떨어진다 → **확산 가정이 깨진다는 신호**
-- ★ 즉 "여기서 뭔가 확산이 아닌 일이 일어난다"
-
-**sv-3 (동역학 축, 커밋 ffe38da):**
-- ★ 같은 K에서 WBA가 그 섬을 **규칙적**이라고 판정: **dig 중앙값 = 10.43**
-- ★ 면적 분율 0.405% (500×500 전체 토러스 격자)
-- ★ 그리고 K=6.9의 규칙 궤도 거의 전부가 이 섬이다 (0.406% ≈ 0.405%)
-
-**★ 두 축의 연결:**
-> **★ 수송이 미쳐 날뛰는 곳에, 규칙 궤도가 있다.**
-> **★ 그리고 그것이 탄도적 수송의 원인이다.**
-
-**★ 그러나 이것을 "독립적 상호검증"이라고 부르지 않는다:**
-- ★ 섬의 위치(θ*)와 trace는 **해석식**에서 나온다 (sin θ* = 2π/K). ★ 측정이 아니다.
-- ★ sv-1은 섬을 **검출**만 했고, 정량화하지 않았다.
-- ★ sv-3의 기록도 이를 명시한다: WBA는 D1이 찾은 섬의
-  **"independent confirmation of the island D1 identified by transport scaling"**일 뿐이다.
-
-**★ 정확한 표현: 수송 축이 이상을 검출했고, 동역학 축이 그 원인을 확인했다.**
-
-**★ 그리고 진짜 상호검증은 sv-3 안에 있다 — WBA ↔ Benettin Lyapunov 99.99% 일치**
-- ★ 같은 레포, 완전히 다른 방법
-- ★ 이것이 도구가 작동한다는 진짜 증거다
-- ★ (sv-3 자신이 적었다: **"No novelty, no discovery claimed."**)
-
-**★ 대칭선 함정 (sv-3, K=6.9)**
-
-| IC 샘플링 | 카오스 분율 | 섬 히트 |
+| IC sampling | chaos fraction | island hits |
 |---|---|---|
-| θ₀ = 0 선 (2000점) | 1.0000 | **★ 0개** |
-| θ₀ = 0.15 선 | 0.9995 | 1개 |
-| p₀ = 0 선 | 0.9060 | 188개 |
-| **★ 2D 격자** | 0.9959 | **★ 섬 = 0.405%** |
+| θ₀ = 0 line (2000 pts) | 1.0000 | 0 |
+| θ₀ = 0.15 line | 0.9995 | 1 |
+| p₀ = 0 line | 0.9060 | 188 |
+| 2D grid | 0.9959 | island = 0.405% |
 
-> **★ θ₀ = 0 선이 가속자 섬의 basin을 통째로 놓친다.**
-> **★ 초기조건을 선(line)에서 뽑으면, 표본이 오염된다.**
-> **★ 그리고 D1(sv-2/d1)도 독립적으로 이 함정을 만났다: K=3.0에서 격자 μ=2, 선 μ=1 (§1.2 참조).**
+> The θ₀ = 0 line misses the accelerator island's basin entirely. Drawing initial
+> conditions from a line contaminates the sample. D1 (sv-2/d1) met the same trap
+> independently (K = 3.0: grid μ = 2, line μ = 1; §1.2).
 
-**★ ε_cr = 0.665는 미재현 (정직한 미완):**
+**ε_cr = 0.665 not reproduced (an honest gap).** The paper gives the amplitude
+weights (/21600) but not the amplitude-to-Hamiltonian normalisation (the
+island-width convention). Both readings are possible — literal ε_cr ≈ 0.426,
+overlap-calibrated ε_cr ≈ 1.2 — and the paper's 0.665 lies between them. The
+mechanism does reproduce (WBA sees the confining KAM barrier break as dig
+collapses from 8–9 to <2); only the number is convention-dependent. No
+coefficient was tuned to hit 0.665.
 
-논문이 진폭 가중치(/21600)는 주지만 **"진폭 → 해밀토니안" 정규화(섬 폭 규약)를 명시하지 않음.** 두 해석 모두 가능:
-- 글자 그대로: ε_cr ≈ 0.426
-- overlap 보정(ε=1에서 모든 쌍 겹침): ε_cr ≈ 1.2
+### 1.4 sv-1 — diffusion coefficient D(K) *(a separate study)*
 
-논문값 0.665가 그 사이에 위치. **명세 부족이며, 계수를 튜닝하여 0.665를 맞추지 않았음.**
+Commit `ecd0c67`. A different study from D1: D1 (sv-2/d1) measures the diffusion
+*exponent* μ(K) — the exponent of ⟨(Δp)²⟩ ~ N^μ; sv-1 measures the diffusion
+*coefficient* D(K) = ⟨Δp²⟩/(2T). Same system (standard map), different quantity.
 
-**메커니즘은 재현됨:** WBA가 가둠 KAM 장벽의 붕괴를 dig 붕괴(8~9 → <2)로 포착. 판정 원리 작동 확인.
+D(K) was measured against Rechester–White quasilinear theory. Ensemble N = 20,000
+particles, T = 2,000 steps, 5 seeds; K scan over [1.0, 10.0], 54 points. Away from
+accelerator modes D/D_QL → 1 (median |ratio − 1| = 0.341, K ≥ 4), agreeing with
+Rechester–White to a median 8.3%; Lyapunov λ rises from 0.05 (K=1) to 1.62 (K=10),
+matching ln(K/2) to a few percent.
 
-**정직한 관찰:** WBA vs Lyapunov 속도 차이는 1.24배에 그침(같은 T에서 벡터화 비교). 다만 판정 일치도는 99.99%.
+**The trap — the accelerator window.** For 2π ≈ 6.283 < K ≲ 7.45 transport is
+ballistic, ⟨Δp²⟩ ∼ t². Fitting a diffusion coefficient there gives a large,
+confident, meaningless number: D/D_QL = 618.8 at K = 6.40 (395.5 at K = 6.9). What
+catches it is the fit R², which drops from 0.9998 in the diffusive regime to ~0.97
+in the window.
 
-### 1.4 sv-1 — 표준맵 확산계수 D(K)
+> Fit a diffusion coefficient where there is no diffusion, and the number
+> explodes. Check the growth exponent before you trust the coefficient.
 
-**★ 커밋: ecd0c67**
+**An observation that prefigures Part 3.** sv-1's record notes that the Lyapunov
+exponent passes smoothly through the accelerator window — it measures local
+instability and is blind to the global ballistic island that spikes D.
 
-**★★ 주의 — 이것은 D1(sv-2/d1_standard_map)과 별개 연구다.**
-- **D1 (sv-2/d1):** 확산**지수** μ(K). ⟨(Δp)²⟩ ~ N^μ 의 지수를 잰다.
-- **★ sv-1:** 확산**계수** D(K). D = ⟨Δp²⟩/(2T) 의 값을 잰다.
-
-★ 두 연구는 같은 계(표준맵)를 다루지만, 다른 양을 잰다.
-
-**무엇을 쟀나**
-- 표준맵의 확산계수 D(K)를 Rechester–White 준선형 이론과 대조
-- 앙상블: N = 20,000 입자, T = 2,000 스텝, 5 시드
-- K 스캔: [1.0, 10.0], 54점
-
-**검증**
-- 가속자 창 밖에서 D/D_QL → 1 (median |ratio − 1| = 0.341, K ≥ 4)
-- Rechester–White와 median 상대오차 8.3%
-- Lyapunov: λ 0.05 (K=1) → 1.62 (K=10), ln(K/2)와 수 % 이내
-
-**★★ 그리고 함정 — 가속자 창**
-- 2π ≈ 6.283 < K ≲ 7.45에서 탄도적 ⟨Δp²⟩ ∼ t²
-- ★ 피크: D/D_QL = 618.8 @ K = 6.40 (K=6.9: 395.5)
-- ★ 그리고 R²가 잡았다: 확산역 0.9998 → 가속자 창 ~0.97
-
-> **★ 확산이 아닌 곳에서 확산계수를 재면, 숫자가 폭발한다.**
-> **★ 계수를 재기 전에, 성장 지수를 먼저 확인하라.**
-
-**★★ 그리고 이 관찰이 §3(sv-4)의 결론을 예고한다**
-
-★ sv-1의 기록:
-> λ는 가속자 창을 매끄럽게 통과한다 — 국소 불안정을 재므로,
-> D를 튀게 하는 전역 탄도 섬에 둔감하다.
-
-★ 즉:
-
-| | 가속자 창에서 |
+| In the accelerator window | |
 |---|---|
-| **수송 (D)** | **★ 619배 폭발** |
-| **동역학 (λ)** | **★ 매끄럽게 통과. 아무 일도 없다는 듯** |
+| Transport (D) | blows up by 619× |
+| Dynamics (λ) | passes smoothly, as if nothing happened |
 
-**★ 그리고 §3에서 같은 일이 일어난다:**
+The same thing recurs in Part 3, on Paul's four fields:
 
-| | Paul의 네 자기장에서 |
+| On Paul's four fields | |
 |---|---|
-| **위상 (converse-KAM)** | **★ 구분 못 함** |
-| **동역학 (WBA)** | **★ 구분 못 함** |
-| **수송 (V_PD, ΔT)** | **★ 구분함** |
+| Topology (converse-KAM) | cannot distinguish them |
+| Dynamics (WBA) | cannot distinguish them |
+| Transport (V_PD, ΔT) | distinguishes them |
 
-**★ 이유도 같다:**
-> **★ Lyapunov는 국소 불안정을 잰다. 그런데 수송은 전역 구조가 결정한다.**
-> **★ converse-KAM과 WBA도 마찬가지다 — 국소적으로 "카오스냐"를 묻지,**
-> **★ "열이 어디로 가느냐"를 묻지 않는다.**
+The reason is the same: Lyapunov measures local instability, but transport is set
+by global structure; and converse-KAM and WBA likewise ask "is this locally
+chaotic," not "where does the heat go." The first repository and the last say the
+same thing:
 
-**★★ 여름의 첫 레포와 마지막 레포가 같은 말을 한다:**
+> A dynamics indicator does not see transport.
 
-> **★ 동역학 지표는 수송을 보지 못한다.**
+This is a connection drawn after the fact, not something sv-1 set out to find.
+Stated honestly: in hindsight, the signal was already there in sv-1.
 
-**★ 다만 — 이것은 사후 연결이다.**
-★ sv-1에서 이것을 의도하고 본 것이 아니다.
-★ 정직하게: **"돌이켜보면, sv-1에 이미 그 신호가 있었다."**
-
-**하지 않은 것**
-- ★ 가속자 섬을 정량화하지 않았다 — 수송 신호로 검출만 했다
-  (sv-1: "does not characterise the island geometry")
-- ★ 확산 지수 μ(K)를 스캔·피팅하지 않았다 — ★★ 그것은 D1(sv-2/d1)이 했다
+Not done: sv-1 did not quantify the island geometry ("does not characterise the
+island geometry"), and did not fit the exponent μ(K) — that was D1 (sv-2/d1).
 
 ---
 
-## §2 — 세 번의 실패, 하나의 결론
+## Part 2 — Three failures, one conclusion
 
-3D 진공 자기장에서 수송 축을 세우려 세 번 시도했다.
+Three attempts to stand up the transport axis on a real 3D vacuum field (QUASR
+104183, the pipeline-validated configuration). Each failed for a different,
+identifiable reason.
 
-**대상:** QUASR 104183 (파이프라인 검증된 배위).
+### Failure 1 — tautology (connection length L_c)
 
-### 실패 ① — L_c (연결길이): 동어반복
+A confined orbit completes the full 400 toroidal returns by definition, so its
+connection length is fixed: L_c = 400 × circumference = 2595 ± 54 m for every
+confined orbit. "Confined ⇒ long L_c" merely restates the confinement criterion;
+it carries no independent information. More statistics would not help — a denser
+grid would only confirm the artifact with more confidence.
 
-갇힌 궤도는 정의상 400회를 완주하므로 L_c = 400 × 둘레 = **상수**(2595 ± 54m).
-"갇혔으므로 L_c가 길다"는 갇힘의 정의를 되풀이한 것. **정보 0.**
+### Failure 2 — bounded coordinate (Δψ with ψ = ι)
 
-**★ 그리고 통계로 안 풀린다.** 격자를 조밀하게 했다면
-아티팩트를 **더 강한 통계로 확증**했을 것이다.
+Radial diffusion was measured in a flux coordinate ψ built from ι. But ι runs only
+from −0.21 (axis) to −0.15 (edge), a width of ≈ 0.06, so any spreading is bounded
+and saturation is guaranteed. Measured ⟨(Δψ)²⟩ (sv-2, RECORD_D_FL_3D, commit
+`3791557`): both classes are flat (μ → 0) — regular orbits (n=410) at 1.2×10⁻⁴ (the
+ψ-interpolation noise floor), chaotic orbits (n=17) at 3×10⁻⁴ (2.5× the floor, in
+variance). Nothing is detectable above the floor. (Earlier hand-supplied numbers —
+μ ≈ 0.54/0.71, D_m ≈ 4.4×10⁻¹², corr −0.62 — were fabricated and are refuted; the
+real corr(dig, log D_m) = −0.45.)
 
-### 실패 ② — Δψ (ψ = ι): 유계 좌표
+### Failure 3 — aliasing (dig from angle increments)
 
-ι가 −0.21(축) → −0.15(가장자리), **폭 ≈ 0.06**뿐 → **포화가 보장됨.**
+The chaos classifier used the WBA convergence (dig) of the poloidal-angle
+*increment* per toroidal return. For ι ≳ 1 the field line advances more than one
+poloidal turn per return, so the once-per-return increment is sampled below the
+Nyquist rate and aliases; regular high-ι orbits then look chaotic. This produced a
+plausible but false pattern — "high ι → high chaos," Pearson r(|ι|, chaos) = 0.674
+— in a scan of random configurations, with 18 of 30 apparently exceeding 10%
+confined chaos. Replacing the observable with a bounded position coordinate
+(x = r cos θ, y = r sin θ) removed the aliasing: the correlation dropped to 0.279
+(carried by a single configuration), and the count fell to 1 of 25. The same fix
+also removed a milder derivative-noise inflation at low ι: for 104183, the
+confined-chaos fraction fell from 2.29% to 0.29–0.76%.
 
-**★ 결정적 증거 (sv-2, RECORD_D_FL_3D, 커밋 3791557):** flux 좌표 ψ에서 ⟨(Δψ)²⟩를 재니
-**규칙 궤도(n=410)도 카오스 궤도(n=17)도 둘 다 평평(μ→0)**하다.
-규칙은 **1.2×10⁻⁴**(ψ-보간 오차 바닥)에서, 카오스는 **3×10⁻⁴**(바닥의 **2.5배**, 분산 기준)에서 포화.
-잡음 바닥 위로 검출되는 확산이 없어 **확산/무확산 구분 불가.**
-(웹방이 준 μ≈0.54/0.71·D_m 4.4e-12·corr −0.62는 조작으로 확인·반박됨; corr(dig, log D_m)=−0.45.)
+### The root cause: there was nothing to measure
 
-### ★ 실패 ③ — 그리고 근본 원인: 잴 대상이 없었다
+Re-classifying with the corrected (position-based) dig:
 
-dig 관측량을 위치 기반으로 고친 뒤 재분류:
-
-| | 옛 dig (각 증분) | 새 dig (위치) |
+| | old dig (angle increment) | new dig (position) |
 |---|---|---|
-| 규칙 | 410 | 450 |
-| **카오스** | **17** | **★ 0** |
-| 탈출 | 1103 | 1103 |
+| regular | 410 | 450 |
+| chaotic | 17 | 0 |
+| escaped | 1103 | 1103 |
 
-**★ 104183의 갇힌 카오스는 0개다.**
-옛 dig(각 증분)가 미분이라 궤적 노이즈를 증폭해 17개를 오분류했던 것.
+104183 has **zero** confined chaotic orbits. The 17 the old observable reported
+were regular orbits with modestly elevated FTLE that the noisy angle-increment dig
+pushed below the cut. We had been trying to measure something that was not there.
 
-**★ 우리는 존재하지 않는 것을 재려 하고 있었다.**
+### Is there a stage anywhere? — a configuration scan
 
-### 배위 스캔 — 무대는 존재하는가
-
-무작위 40개 QUASR 진공 배위 (기준 사전 확정, 낚시 없음):
+40 random QUASR vacuum configurations (criteria fixed before coding; nothing
+cherry-picked):
 
 | | |
 |---|---|
-| 분류 성공 | 25개 |
-| 갇힌 카오스 ≥10% | **1개** (1646237, 43%) |
-| 나머지 24개 | 대부분 ~0% |
+| classified successfully | 25 |
+| ≥ 10% confined chaos | 1 (1646237, 43%) |
+| the other 24 | mostly ~0% |
 
-**★ 그리고 유일한 통과 배위는 자기축이 없다.**
-period-doubling 분기로 자기축이 hyperbolic X점(Tr = −2.041, R = +1.010)이 되었고,
-안정 구조는 period-2 섬 쌍(Z = ±4.1cm)으로 이동.
-**→ 축 기반 좌표를 세울 수 없어 측정 불가.**
+The single exception, 1646237, has no conventional magnetic axis. A period-doubling
+bifurcation has turned the axis point into a hyperbolic X-point (Tr = −2.041,
+residue +1.010); the surviving stable structure is a period-2 island pair
+(Z = ±4.1 cm). Its chaos is resolution-robust (43.6% at 1 cm, 41.5% at 0.5 cm), so
+it is real — but the configuration is a degenerate, high-shear case with no
+axis-based coordinate to build on, not a representative confined equilibrium.
 
-### ★ 물리적 결론
+### The physical conclusion
 
-> **진공에는 갇힌 카오스가 거의 없다. 자기력선은 "규칙적이거나 열려 있다".**
-> **그리고 갇힌 카오스가 많은 배위는 이미 자기축이 붕괴한 병적인 배위다.**
+> Vacuum fields contain almost no confined chaos: field lines are either regular or
+> escaping. And a configuration with a lot of confined chaos already has a
+> collapsed magnetic axis.
 
-**메커니즘:** 압력 없음 → 압력 구동 전류 없음 → 섬이 안 커짐
-→ Chirikov 겹침 미달 → stochastic 층 안 생김.
+The mechanism: no pressure → no pressure-driven current → islands do not grow → the
+Chirikov overlap condition is not reached → no stochastic layer forms. Confined
+chaos is a product of finite β. Measuring it needs a finite-β 3D equilibrium that
+does not assume flux surfaces — that is, HINT.
 
-**★ 즉 갇힌 카오스는 유한 β의 산물이다.**
+### What survived — the dynamics axis did transfer to 3D
 
-**→ 유한 β 3D 평형(자기면 가정 없는)이 필요하다. 즉 HINT. 즉 히로시마.**
+Not everything failed. Three results held:
 
-### ★ 살아남은 것 — 동역학 축은 3D 이식에 성공했다
+- **dig ↔ FTLE correlation** over all 553 confined orbits: r = −0.555 (angle
+  increment) → −0.532 (position). Sign and magnitude survived a complete change of
+  the dig observable — two independent chaos indicators agreeing. This is the
+  genuine cross-validation.
+- **WBA as a fast rotation-number method.** It replaced a pyoculus ι calculation
+  that had stalled (22 lines, aborted after 183 s): 1656 initial conditions in
+  179 s, about 75× faster per line, with ι = 0.21 (axis) → 0.18 (edge) matching the
+  paper (0.21 → 0.19).
+- **WBA is more sensitive than FTLE across the cantori/edge layer.** In the edge
+  band WBA registers irregularity (dig ≈ 2–4) while the FTLE is still ≈ 0.02.
 
-**① dig ↔ FTLE 상관 (갇힌 궤도 553개 전체):**
-옛 dig −0.555 → 새 dig −0.532.
-★ dig 계산 방법을 통째로 바꿨는데도 부호와 크기가 유지되었다.
-WBA와 Lyapunov가 독립적으로 같은 것을 본다.
-
-**② ★ WBA가 계산 병목을 해소했다:**
-QUASR에서 실패했던 iota 프로파일 계산
-(pyoculus compute_iota, 22선 183초 후 중단)을 WBA가 대체.
-1656 IC를 179초에 처리 — **선당 약 75배.**
-그리고 ι = 0.21(축) → 0.18(가장자리)로 논문값(0.21 → 0.19)과 일치.
-★ 빠를 뿐 아니라 맞다.
-
-**③ ★ WBA가 FTLE보다 민감하다:**
-가장자리 띠(dig 2~4)에서 WBA는 불규칙 신호를 내는데 FTLE는 아직 작다(~0.02).
-FTLE는 지수적 발산을 재므로 cantori 근처의 끈적한 궤도에서 값이 작다.
-WBA는 평균의 수렴을 재므로 cantori에 붙었다 떨어지면 dig가 낮다.
-★ 두 도구가 다른 것을 본다.
-
-**★ 즉 B4의 판정은 "실패"가 아니라 "부분 통과"다:**
-- 동역학 축(WBA, FTLE): 3D 이식 성공, 상호검증 완료
-- 수송 축(L_c): 실패 (동어반복)
+So the verdict on this part is not "failure" but "partial pass": the dynamics axis
+transferred to 3D and cross-validated; the transport axis (L_c) failed as a
+tautology.
 
 ---
 
-## §3 — 축소 모델로: converse-KAM 3D
+## Part 3 — Reduced models: three axes on one stage
 
-**(별도 레포: converse-kam-3d)**
-**브랜치: claude/converse-kam-3d-y23ijj**
-**커밋: C0 = e268182, C1 = c35facb**
+Separate repository sv-4 (converse-kam-3d), branch
+`claude/converse-kam-3d-y23ijj`. Commits: C0 `e268182`, C1 `c35facb`, C2
+`393328e`, C3a `bf5ca06`, C3b v2 `8a52ca1`.
 
-> ★ 지표마다 "먼저 보는 것"이 다르다.
-> B4에서 WBA가 FTLE보다 cantori를 먼저 감지했고,
-> C1에서 converse-KAM은 섬과 카오스를 구분하지 못한다.
-> **이 차이가 C3(세 축 비교)의 전제다.**
+Part 2 showed that a QUASR vacuum field is not a stage on which to measure
+transport. Reduced models are: the Kallinikos–MacKay (KMM) and Paul–Hudson–Helander
+model fields are built to contain islands, Chirikov overlap, and chaos on purpose,
+and they come with an answer key.
 
-### 왜 이동했는가
+**The gap in the literature.** Paul, Hudson & Helander (2022, arXiv:2108.06328):
 
-§2가 보여준 것: **진공 QUASR 배위는 수송을 잴 무대가 아니다.**
+> "[our metric] appears to be related to the converse KAM approach... We expect
+> that the effective volume of parallel diffusion might agree with such a
+> calculation in the limit of small perpendicular diffusion. **We reserve such a
+> comparison for future publication.**"
 
-**★ 그러나 축소 모델에는 무대가 있다.**
-Kallinikos-MacKay(KMM)와 Paul-Hudson-Helander의 모델 자기장은
-자기섬, Chirikov 겹침, 카오스를 **의도적으로 갖도록 설계되었고, 정답지가 있다.**
+Written in 2022; four years on, it has not appeared. This part performs that
+comparison. Paul's own §3 argues why the two are related: converse-KAM tests the
+non-existence of invariant tori for a given foliation, and V_PD depends on the
+topology of the isotherms — the two ask "the same kind of question" in different
+languages.
 
-### ★ 그리고 문헌의 구멍
+### C0 — two model fields (pass)
 
-**Paul et al. (2022, arXiv:2108.06328) 결론:**
-> converse-KAM 접근법과 관련이 있어 보이며, 수직 확산이 작은 극한에서
-> 두 계산이 일치할 것으로 예상한다. **그 비교는 향후 논문으로 남긴다.**
+**KMM field** (arXiv:2304.09613): with the auxiliary vector field V (V^φ = 1, so φ
+is time), Example 1 (integrable) conserves the invariant Ψ = −nψ − m·A_φ to
+6×10⁻¹², and the Poincaré section matches its contours. The (2,1) island area,
+computed two independent ways, agrees to six digits: S_I(ε=0.004) = 0.4928 — the
+answer key for C1. Greene residues R_O = +0.52 (elliptic), R_X = −0.69 (hyperbolic).
 
-**★ 2022년. 4년째 나오지 않았다.**
+**Paul field** (arXiv:2108.06328): the critical-overlap fields m = 4, 12, 36. A
+single field line wanders the whole interior (ψ ≈ 0.13–0.87), confirming KAM
+destruction; a surviving boundary KAM band and secondary island chains match the
+paper's Fig. 6 qualitatively.
 
-**그리고 Paul이 §3에서 왜 그렇게 생각하는지 논증한다:**
-converse-KAM은 주어진 foliation에 대한 불변 원환면의 비존재를 판정하고,
-V_PD도 isotherm(등온면)의 topology에 의존하므로,
-**둘이 "같은 종류의 질문"을 다른 언어로 묻는다.**
+### C1 — converse-KAM 3D (pass)
 
-### C0 — 두 자기장 구현 (통과)
+Principle (MacKay 2018; KMM Theorem 3.1): if an invariant surface exists, an
+infinitesimal displacement vector cannot rotate across it; so if the displacement
+rotates in the forbidden way, no surface of that class passes through the orbit.
+This is a proof of *non-existence* — something Poincaré cannot give.
 
-**KMM 자기장** (arXiv:2304.09613):
-- 보조 벡터장 V (V^φ = 1 → φ를 시간으로)
-- **예제 1 (적분가능):** 불변량 Ψ = −nψ − m·A_φ 가 **6×10⁻¹²까지 보존**
-- **★ Poincaré가 Ψ의 등고선과 정확히 일치** → 적분가능 확인
-- **★ (2,1) 섬 면적을 두 독립 방법으로 계산, 6자리 일치: S_I(ε=0.004) = 0.4928**
-  → **이것이 C1의 정답지**
-- Greene residue: R_O = +0.52 (elliptic), R_X = −0.69 (hyperbolic),
-  R_O ∝ ε (소 ε), period-doubling 근처 ε ≈ 0.013
+**Check 1 — island-area convergence (KMM Fig. 4):** analytic S_I = 0.4928;
+converse-KAM detected area S(t_f=200) = 0.4941; ratio 1.003. The detected region is
+exactly the island; core and exterior keep their radial KAM tori.
 
-**Paul 자기장** (arXiv:2108.06328):
-- 임계 겹침 자기장 m = 4, 12, 36
-- **★ 단일 자기력선이 내부 전체(ψ ≈ 0.13~0.87)를 돌아다님** → KAM 전멸 확인
-- 경계 KAM 생존 + 2차 섬 사슬 → 논문 Fig 6과 정성적 일치
+**Check 2 — first-detection time (KMM Fig. 5):** t_c ~ (π/2)·T/√R, the 1/√R
+scaling reproduced to within 10–25%. This is also a cross-check against the residue
+code: measure R by residue → predict t_c → measure t_c by converse-KAM → they
+agree.
 
-### C1 — converse-KAM 3D 구현 (통과)
+**Check 3 — Examples 2 vs 3 (the seed of C2/C3):** for Example 3 (2/1 + 5/4)
+converse-KAM returns two separate rings (inner (2,1), outer (5,4), with KAM
+between); for Example 2 (2/1 + 3/2) it returns one broad ring — two islands plus
+the chaotic layer between them, all lumped together. This is the limitation KMM
+warn about in §4.2: with a radial foliation, converse-KAM cannot separate a torus
+inside an island from chaos. In short:
 
-**원리 (MacKay 2018, KMM Theorem 3.1):**
-불변 곡면이 있다면 무한소 변위 벡터가 그 곡면을 가로질러 회전할 수 없다.
-**→ 변위 벡터가 금지된 방식으로 회전하면, 그 궤도를 지나는 그 종류의 곡면은 없다.**
+- converse-KAM: island = non-existent, chaos = non-existent → **cannot distinguish**
+- WBA: island = regular, chaos = irregular → **distinguishes**
+- V_PD: **unknown** — this is the open question
 
-**★ 이것은 "증명"이다. Poincaré가 주지 못하는 것.**
+An honest gap: the paper says the symmetry line (Theorem 3.2) halves the
+first-detection time; in practice the factor of two is in the timing of the λ
+condition (λ < 0 at φ ≈ 12.4, half of the full β-sign-change at φ ≈ 24.5), not in
+"use condition (i) only." Read literally, it does not reproduce; recorded, not
+tuned. The symmetry-line contamination that bit D1/B2 does not appear here in the
+integrable case (symmetry line 0.4866 = 2D grid 0.4866), because inside an island
+the tangent rotates monotonically; whether it splits in the non-integrable cases
+is left open.
 
-**★ 검증 1 — 섬 면적 수렴 (KMM Fig 4 재현):**
+### C2 — converse-KAM on Paul's four fields (commit `393328e`)
 
-| | |
-|---|---|
-| 해석적 섬 면적 S_I | 0.4928 |
-| converse-KAM 검출 면적 S(t_f=200) | **0.4941** |
-| **비율** | **1.003** |
+This is the core of the project. Paul (2022) argued that m = 4, 12, 20, 36 are all
+far from integrability "by traditional measures such as the Chirikov overlap
+criterion or converse KAM theory," yet their heat transport is "remarkably
+distinct" — i.e. converse-KAM is expected not to distinguish them. Nobody had
+checked. Here is the check.
 
-단조 수렴 확인. **검출 영역이 정확히 섬이며, 코어와 외부는 radial KAM 원환면을 유지.**
+Gate: in Paul coordinates the converse-KAM reproduces the analytic island of a
+single-resonance (integrable) field exactly — 2488 cells detected = 2488 cells
+inside, no false positives, no misses.
 
-**★ 검증 2 — 첫 검출 시각 (KMM Fig 5 재현):**
+Result (N=160, t_f=200):
 
-```
-t_c ~ (π/2)·T/√R
-```
-
-1/√R 스케일링 재현, 예측의 10~25% 이내.
-
-**★ 그리고 이것은 residue 코드와의 교차검증이다.**
-R을 residue로 재고 → t_c를 예측 → converse-KAM으로 측정 → 일치.
-**두 독립 도구가 같은 대상(섬의 안정성)을 가리킨다.**
-
-**★ 검증 3 — 예제 2 vs 3의 대비 (이것이 C2/C3의 씨앗이다):**
-
-| | 검출 결과 |
-|---|---|
-| **예제 3** (2/1 + 5/4) | **두 개의 분리된 고리.** 안쪽 (2,1), 바깥 (5,4) — 오각형 5-섬 구조. 사이에 KAM 생존. |
-| **예제 2** (2/1 + 3/2) | **하나의 넓은 고리.** 섬 두 개 + 사이 카오스층이 **전부 뭉뚱그려짐.** |
-
-**★ 그리고 이것이 KMM이 §4.2에서 직접 경고한 한계다:**
-> radial foliation을 쓰면 — **섬 안의 원환면과 카오스를 구분하지 못한다.**
-
-**★ 즉:**
-- **converse-KAM:** 섬 = 비존재(죽음), 카오스 = 비존재(죽음) → **구분 못 함**
-- **WBA:** 섬 = 규칙적(삶), 카오스 = 불규칙(죽음) → **구분함**
-- **V_PD:** ? ← **★ 이것이 미지수이며, 구멍 1이다**
-
-### ★ 정직한 미완 — 대칭선 factor-of-2
-
-**논문 주장:** Theorem 3.2(대칭선)를 쓰면 첫 검출 시각이 **절반**.
-
-**실제:**
-
-```
-θ=0 선 위에서:
-  λ < 0 도달:      φ ≈ 12.4   ← 절반
-  β 부호 변화:     φ ≈ 24.5   ← 전체
-```
-
-**★ factor-of-2는 λ 조건의 타이밍에 있지, "조건 (i)만 쓴다"에 있지 않다.**
-논문을 글자 그대로 읽으면 재현되지 않는다.
-
-**★ 튜닝하지 않고 기록한다.** (B2의 ε_cr = 0.665와 같은 구조)
-
-### ★ 그리고 대칭선 함정 — 예상과 달랐다
-
-D1(sv-2/d1)/B2(sv-3)에서 대칭선이 표본을 오염시켰으므로 경계했으나:
-
-| | 면적 |
-|---|---|
-| 대칭선 (Thm 3.2) | 0.4866 |
-| 2D 격자 (Thm 3.1) | 0.4866 |
-
-**★ 적분가능 예제에서는 같다.** 섬 안에서 접벡터가 단조 회전하므로,
-첫 β 부호 변화에서 항상 λ < 0이 되어 두 판정이 일치한다.
-
-**★ 그러나 비적분(예제 2/3, Paul)에서는 갈릴 수 있다. future_questions로.**
-
-### C2 — Paul 자기장 네 개에 적용 (커밋 393328e)
-
-**★ 이것이 이 프로젝트의 핵심이다.**
-
-**Paul et al. (2022)의 주장:**
-> 임계 겹침 자기장 m = 4, 12, 20, 36은 **넷 다 KAM 곡면이 전멸**했다.
-> 그런데 **열 수송이 완전히 다르다.**
-> "while all of the fields would be classified as very far from integrability
-> by traditional measures such as the Chirikov overlap criterion
-> **or converse KAM theory**, the impact ... on the overall transport
-> is **remarkably distinct**."
-
-**★ 즉 "converse-KAM은 구분하지 못할 것"이라는 예측이다. 그러나 아무도 해보지 않았다.**
-
-**★ 우리가 처음으로 검정했다.**
-
-#### 게이트 통과 — Paul 좌표에서의 검증
-
-Paul 좌표(ξ = ∂ρ, 유클리드 metric)의 converse-KAM이
-**단일 공명(적분가능) 자기장의 해석적 섬을 정확히 재현:**
-**2488셀 검출 = 2488셀 내부. 오검출 0, 누락 0.**
-
-#### 결과 (N=160, t_f=200)
-
-| | 공명수 | 면적(%) | **코어 ρ∈[.25,.75]** | 미검출% | **t_c 중앙값** |
+| | resonances | area (%) | core ρ∈[.25,.75] | undetected % | median t_c |
 |---|---|---|---|---|---|
-| m=4 | 3 | 65.9 | **100.0%** | 33.7 | **18.9** |
-| m=12 | 9 | 71.9 | **99.9%** | 27.6 | **19.5** |
-| m=20 | 15 | 73.4 | **100.0%** | 26.1 | **19.4** |
-| m=36 | 27 | 74.0 | **100.0%** | 25.5 | **20.5** |
+| m=4 | 3 | 65.9 | 100.0% | 33.7 | 18.9 |
+| m=12 | 9 | 71.9 | 99.9% | 27.6 | 19.5 |
+| m=20 | 15 | 73.4 | 100.0% | 26.1 | 19.4 |
+| m=36 | 27 | 74.0 | 100.0% | 25.5 | 20.5 |
 
-**★ 세 가지 읽기, 전부 같은 방향:**
+Three readings, all the same direction: (i) in the core (Paul's normalisation band)
+all four are 100% non-existent — no distinction where transport lives; (ii) the t_c
+distributions are nearly identical (overlapping histograms), so there is no "same
+area but different t_c" escape either; (iii) the full-domain area does differ
+(66 → 74%), but in the *opposite* direction to V_PD (m=4 has the smallest area yet
+the most transport), and the difference comes from island-core and edge geometry,
+away from where transport is set. converse-KAM does not distinguish the four in
+transport terms. Paul's prediction is confirmed.
 
-**① 코어(Paul의 정규화 밴드)에서 넷 다 100% 비존재**
-→ **수송이 사는 곳에서 구분 못 함**
+Two guards worth noting. The one difference (full-domain area) points the "safe"
+way — m=4 smallest, not largest — so it cannot be misread as "converse-KAM predicts
+transport"; the result is stronger for not going the way one might have wanted. And
+the 25–34% "undetected" is genuine non-detection (boundary KAM plus island cores),
+saturated at t_f = 200/400/800 — not read as "undetected = KAM present" (the
+"escaped = measurement failure" lesson from Part 2).
 
-**② t_c 분포가 거의 동일** (히스토그램 겹침)
-→ **"면적은 같은데 t_c가 다르다"는 탈출구도 없음**
+### C3a — WBA does not distinguish them either (commit `bf5ca06`)
 
-**③ 전영역 면적은 다르나(66→74%), V_PD와 반대 방향**
-- m=4가 면적 최소인데 수송은 최대
-- **★ 그리고 그 차이는 섬 코어·가장자리 기하에서 나온다 (수송과 무관한 곳)**
+C2 left a question: converse-KAM misses what V_PD sees; why? Hypothesis:
+converse-KAM is blind to cantori, and WBA — which measures how sticky an orbit is —
+might see them.
 
-**→ ★ converse-KAM은 수송 관점에서 넷을 구분하지 못한다. Paul의 예측 확인.**
+Gate: on a single-resonance Paul field dig_ψ separates cleanly (island interior
+dig ≈ 12–14; chaotic sea dig ≈ 1), so the tool works and a core value of dig ≈ 1 is
+real chaos, not tool failure.
 
-#### ★ 함정 처리
-
-**함정 (예쁜 결과):** 유일한 차이가 **위험한 방향이 아니다.**
-m=4가 면적 **최소**로 나왔다 (최대가 아니라).
-**★ 즉 "converse-KAM이 수송을 예측한다"로 오독될 여지가 없다.**
-**★ 우리가 원하는 방향이 아닌데도 나왔으므로, 오히려 결과가 강해진다.**
-
-**함정 (timeout):** t_f = 200/400/800에서 포화 확인.
-**★ 미검출 25~34%는 "시간 부족"이 아니라 "진짜 비검출"** (경계 KAM + 섬 코어).
-**★ "미검출 = KAM 있음"으로 해석하지 않았다** (B4의 "escaped = 측정 실패" 교훈).
-
-#### ★ 새로 배운 함정 둘
-
-**① 격자 이산화 (비단조 오차)**
-섬 면적의 격자 오차가 **비단조 ±0.5%**로 요동.
-**★ converse-KAM을 아예 쓰지 않고 해석적 참 섬만 셀 카운트해도 똑같은 요동.**
-→ 100% 이산화. 얇은 초승달 경계(섬 셀의 25~27%)가 사각 격자에 잘리는 방식 때문.
-
-**② ★ 유한시간 착각 (m=36 "파편화")**
-3000 회전에서 m=36의 카오스가 **파편화된 것처럼 보였다.**
-**★ 10⁵ 회전까지 늘리니 전 범위를 돌았다.**
-→ 파편화가 아니라 **cantori 병목**.
-
-**★ 이것은 D1(sv-2/d1)의 유한시간 함정(μ 검정)과 같은 구조다 (§4 ⑥); sv-1의 ⑧(잘못된 모델)과는 다른 종류다.**
-**★ 안 잡았으면 C2가 통째로 잘못된 전제 위에 세워졌을 것이다.**
-
-> **★ 유한시간에서 본 것이 무한시간의 진실이 아니다.**
-
-### C3a — WBA도 구분하지 못한다 (커밋 bf5ca06)
-
-**★ C2가 남긴 질문:** converse-KAM은 못 보는데 V_PD는 본다. 왜인가?
-
-**가설:** converse-KAM은 **cantori를 보지 못한다.**
-그리고 **WBA는 볼 수 있을 것이다** ("궤도가 얼마나 끈적한가"를 재므로).
-
-#### 게이트 통과 — 눈금을 만들었다
-
-**★ dig ≈ 1이 "낮다"고 말하려면, "높다"가 뭔지 알아야 한다.**
-
-단일 공명 Paul 자기장에서 dig_ψ가 정확히 분리:
-- **섬 내부: dig ≈ 12–14** (규칙)
-- **★ 카오스 바다: dig ≈ 1**
-
-**→ 도구가 살아 있다. 따라서 코어의 dig ≈ 1은 진짜 카오스다.**
-
-#### ★★ T-수렴 — 그리고 유한시간 함정을 또 잡았다
-
-**코어 무작위 IC 100개, dig 중앙값:**
+T-convergence (100 random core ICs, median dig):
 
 | | T=500 | T=1000 | T=2000 | T=5000 |
 |---|---|---|---|---|
-| m=4 | 1.05 | 1.19 | 1.21 | **1.46** |
+| m=4 | 1.05 | 1.19 | 1.21 | 1.46 |
 | m=12 | 0.93 | 0.93 | 0.83 | 0.97 |
 | m=20 | 1.21 | 1.12 | 1.01 | 0.93 |
-| m=36 | **1.42** | 1.24 | 1.14 | 0.99 |
+| m=36 | 1.42 | 1.24 | 1.14 | 0.99 |
 
-**★ T=1000 스냅샷 하나만 봤으면 — m=36이 가장 높아서
-"cantori 신호"로 착각했을 것이다.**
+At a single T = 1000 snapshot, m=36 is highest — which would have looked like the
+"cantori signal," and it was exactly the answer we were hoping for. But it washes
+out with T: the curves cross (m=36 falls 1.42 → 0.99, m=4 rises 1.05 → 1.46).
+Hypothesis rejected; it was a finite-time artifact. (The residual — m=4 slightly
+higher at large T — tracks m=4's larger islands, anti-correlated with transport,
+the same sign as C2's area; not a transport signal.)
 
-**★ 그리고 그것이 정확히 우리가 원하던 답(가설 A)이었다.**
+Verdict: the four core dig distributions are indistinguishable (median ≈ 1, ~90%
+chaotic, IQR fully overlapping at every T). WBA does not distinguish the four
+either.
 
-**★ T를 늘리니 씻겨나갔다. 곡선이 교차한다.**
-m=36: 1.42 → 0.99 (떨어짐) / m=4: 1.05 → 1.46 (오름)
+And where the two indicators disagree is exactly the islands. At the same points
+Spearman(t_c, dig) ≈ −0.14 to −0.21 — weak, and the scatter is L-shaped: on the
+chaotic sea both say "chaotic"; inside islands converse-KAM says "dead" (no radial
+torus, detected fast) while WBA says "alive" (high dig). This is the §4.2
+limitation, made quantitative on Paul's fields.
 
-**→ 가설 A 기각. 유한시간 아티팩트였다.**
+### C2 + C3a — the conclusion
 
-**★ 잔여 차이(m=4가 큰 T에서 약간 높음)는 m=4의 큰 섬을 추적한다.**
-**★ 수송과 반상관이며, C2의 면적 결과와 같은 부호다. 수송 신호가 아니다.**
+Same fields, same grid, same core:
 
-#### 판정
-
-네 자기장의 코어 dig 분포가 구분되지 않는다
-(중앙값 ≈ 1, ~90% 카오스, IQR이 모든 T에서 완전히 겹침).
-
-**→ WBA도 넷을 구분하지 못한다.**
-
-#### ★★ 그리고 두 지표는 섬에서 갈린다
-
-**같은 점에서 t_c(C2) ↔ dig(C3a): Spearman ≈ −0.14 ~ −0.21 (약함)**
-
-**★ 산점도가 L자형이다:**
-
-| 영역 | converse-KAM | WBA | |
-|---|---|---|---|
-| 카오스 바다 | 검출 (빠름) | dig 낮음 | **일치** |
-| **★ 섬 내부** | **"죽음"** | **"살아있음"** | **★ 갈림** |
-
-**★ 즉 두 지표가 정확히 섬에서 갈린다. 그리고 그것이 전부다.**
-
-**★ 여름 내내 말한 것이 정량화되었다:**
-- converse-KAM: 섬을 "죽음"으로 표시
-- WBA: 섬을 "살아있음"으로 표시
-
----
-
-### ★★ C2 + C3a의 결론
-
-**같은 자기장, 같은 격자, 같은 코어:**
-
-| 지표 | 축 | 넷을 구분하는가 |
+| Indicator | Axis | Distinguishes the four? |
 |---|---|---|
-| **converse-KAM** | 위상 | **★ 못 한다** |
-| **WBA** | 동역학 | **★ 못 한다** |
-| **V_PD** | 수송 | **★ 한다** (Paul) |
-| **실제 열 수송** | — | **★ 한다** (Paul) |
+| converse-KAM | topology | **no** |
+| WBA | dynamics | **no** |
+| V_PD | transport | **yes** (Paul) |
+| heat transport ΔT | — | **yes** (Paul) |
 
-**★ 두 개의 위상/동역학 지표가, 수송 지표가 보는 것을 놓친다.**
+Two topology/dynamics indicators miss what the transport indicator sees. This is
+the quantitative form of the summer's thesis:
 
-**★ 이것이 이 여름 전체를 관통하는 주장의 정량적 형태다:**
+> Broken is not the same as leaking — and a tool that measures breaking cannot
+> measure leaking.
 
-> **"깨졌다 ≠ 샌다. 그리고 깨짐을 재는 도구로는 샘을 못 잰다."**
-
-**★ 그러나 "왜"는 아직 모른다.**
-
-가설(cantori-blindness)은 여전히 가설이다.
-**★ 왜냐면 V_PD를 우리 손으로 구현하지 않았기 때문이다.**
-(Paul의 논문 그림에서 값을 읽은 것이지, 우리 계산이 아니다.)
-
-**★ 그것이 C3b이며, Paul이 2022년에 남긴 비교를 완성한다.**
+The "why" is still open. The cantori-blindness hypothesis remains a hypothesis,
+because V_PD has not been implemented here (the V_PD values are read from Paul's
+figures, not our own computation). That is C3b, and it completes the comparison
+Paul left in 2022.
 
 ---
 
-## §4 — 배운 함정
+## Pitfalls
 
-### ★ 직접 데어서 배운 것 (문헌에 없음)
+The most transferable content of the summer is not a number but a set of ways to
+fool yourself while measuring. Several were met directly.
 
-**① 동어반복 (L_c)**
-> 분류 기준과 측정량이 같은 근원에서 나오면, 그 둘의 상관은 정보가 아니다.
+**1. Tautology (L_c).** When the classification and the measured quantity come from
+the same source, their correlation is not information. More statistics do not fix
+it.
 
-**★ 통계를 늘려도 안 풀린다.**
+**2. Bounded coordinate (Δψ = ι).** When the domain of the measured quantity forces
+the answer, the measurement carries no information; here even non-crossing regular
+orbits "saturate."
 
-**② 유계 좌표 (Δψ = ι)**
-> 측정량의 정의역이 답을 강제하면, 그 측정은 정보가 없다.
+**3. Aliasing (dig).** Sampling below the signal rate distorts it (Nyquist), and it
+manufactures a plausible physical pattern ("high ι → high chaos"). Related: an
+increment is a derivative, so using increments amplifies trajectory noise and
+over-counts chaos (~3×) even without aliasing.
 
-**★ 규칙 궤도조차 "포화"한다** (폭의 19%, 전부 잡음).
+These three share a lesson:
 
-**③ Aliasing (dig)**
-> 샘플링이 신호보다 느리면, 신호를 왜곡한다. (Nyquist)
+> Do not trust the number; look at the picture. And the prettier the result, the
+> sooner you should doubt it.
 
-**★ 그리고 "고-ι → 고-카오스"라는 그럴듯한 물리 패턴을 만들어낸다.**
+(L_c looked plausible — caught by re-reading the definition. Δψ looked plausible —
+caught by comparing to its domain. dig looked *perfect*, a clean bimodal histogram
+— caught by looking at the Poincaré section.)
 
-**부수 발견: 미분은 노이즈를 증폭한다.**
-각 "증분"을 관측량으로 쓰면, aliasing이 없는 저-ι에서도
-카오스를 **~3배 과다계상**한다.
+**4. Interpreting results that were never computed.** A set of numbers (μ = 0.54,
+D_m = 4.4×10⁻¹², corr −0.62, with physical interpretation) was supplied without
+ever having been run. Rule: do not interpret a result that has no commit hash
+behind it.
 
-### ★ 셋의 공통점
+**5. Grid discretization (non-monotone error).** The island-area grid error
+oscillated non-monotonically by ±0.5%. Diagnosis: counting the analytic island
+cells with no converse-KAM at all gives the same oscillation — it is 100%
+discretization (thin crescent boundaries, 25–27% of island cells, cut differently
+by the square grid at each N).
 
-| | 숫자가 | 어떻게 잡혔나 |
+> If the grid error does not decrease monotonically, that is fluctuation, not
+> convergence. "The error shrank when I raised N" can be luck.
+
+**6. Finite-time illusion — met three times.** What you see at finite time is not
+the infinite-time truth.
+
+- D1 (sv-2/d1): suspected the K=6.9 μ ≈ 1.5 might be finite-time → tracked to
+  N=10⁷ → μ stays 2; not an artifact (a stable island). The literature "μ → 1 at
+  large N" is the contrast case without a stable island. (Here the trap was
+  suspected and ruled out.)
+- C2: m=36 chaos looked fragmented at 3000 turns → filled the whole range by 10⁵
+  turns (a cantori bottleneck, not fragmentation).
+- C3a: at T=1000 m=36's dig was highest → washed out by T=5000. This was the most
+  dangerous case, because it was the answer we wanted.
+
+> If the answer you were hoping for appears at finite time, suspect it more.
+
+**7. Missing calibration (a control).** To call dig ≈ 1 "low," you must know what
+"high" is; the gate (island interior dig ≈ 12–14 on a single resonance) is that
+calibration. Do not interpret a value without a control that shows the tool works.
+
+**8. Fitting the wrong model (sv-1).** Fit a diffusion coefficient where transport
+is ballistic and the number explodes (D/D_QL = 618.8 at K=6.4), caught by R²
+dropping 0.9998 → 0.97. This is distinct from (6): (8) is a *wrong assumption*
+(ballistic, not diffusive) and more time does not fix it; (6) is *too little time*
+and more time reveals the truth.
+
+**9. Symmetry line.** Drawing initial conditions from a line contaminates the
+sample. Two repositories met it independently: D1 (sv-2/d1) at K=3.0 (grid μ=2 vs
+line μ=1); B2 (sv-3) at K=6.9 (θ₀=0 line hits the accelerator island 0 times vs
+0.405% on a 2D grid). It does not appear in the integrable converse-KAM case
+(sv-4/C1: symmetry line 0.4866 = 2D grid 0.4866).
+
+*(Inherited from earlier projects and listed for completeness: a diagnostic
+measuring the wrong axis; a snapshot taken before convergence; Greene-residue
+commensurability, where the period chosen annihilates the orbit.)*
+
+---
+
+## Toolkit status
+
+| Axis | Tool | Status |
 |---|---|---|
-| L_c | 그럴듯했다 | **정의를 다시 봄** |
-| Δψ | 그럴듯했다 | **정의역과 비교** |
-| dig | **완벽했다** (깨끗한 쌍봉!) | **★ Poincaré 그림을 봄** |
+| **Topology** | Poincaré, fixed points, Greene residue | done (3D) |
+| | period-doubling detection | done |
+| | converse-KAM 3D | done — validated on KMM (island area 0.3%); applied to Paul's fields (C2) → does not distinguish |
+| **Dynamics** | WBA | done (2D + 3D + Paul); observable must be position, not angle; applied to Paul (C3a) → does not distinguish; vectorized RK4 gives 200–300× |
+| | Lyapunov / FTLE | done (2D + 3D); cross-validated with WBA (corr = −0.53) |
+| **Transport** | diffusion exponent μ (standard map) | done (sv-2/d1) |
+| | 3D vacuum | not possible in principle (nothing to measure) |
+| | V_PD | not done — C3b, the last piece |
+| **Field** | QUASR vacuum | done |
+| | KMM model (3 examples), Paul model (m=4/12/36) | done (C0) |
+| | finite β (HINT) | not done — Hiroshima |
 
-> **★ 숫자를 믿지 말고 그림을 봐라. 그리고 예쁜 결과일수록 먼저 의심해라.**
+The topology axis is now complete in 3D — a slot that was empty all summer.
 
-### ★ ④ 웹방 환각
+## Next steps (C3b)
 
-웹방 Claude가 **존재하지 않는 결과를 해석했다**
-(μ=0.54 아확산, D_m=4.4e-12, 상관 −0.62, 그리고 물리 해석까지).
-**Claude Code가 레포 grep으로 잡았다.**
-
-**★ 규칙: 커밋 해시 없는 결과는 해석하지 않는다.**
-
-### ★ C2/C3a에서 새로 배운 것
-
-**⑤ 격자 이산화 (비단조 오차) — C2**
-> 격자 오차가 단조 감소하지 않으면, 그것은 수렴이 아니라 요동이다.
-> **★ "N을 키우니 오차가 줄었다"가 우연일 수 있다.**
-
-**★ 진단법: 측정 도구를 빼고 격자만 남겨서 같은 요동이 나오는지 본다.**
-
-**⑥ ★ 유한시간 착각 — D1, C2, C3a에서 세 번**
-> 유한시간에서 본 것이 무한시간의 진실이 아니다. (**시간이 짧아서** 틀린다.)
-
-- **D1 (sv-2/d1, 4bc1fbd):** K=6.9의 μ≈1.5가 유한시간 아티팩트인지 의심 → N=10⁷까지 추적.
-  ★ μ가 2.0에 포화·유지 → **아티팩트 아님, 진짜 탄도**(안정 섬). 문헌의 "μ→1(N≥10⁷)"은
-  **안정 섬 없는 K**의 대조 경우일 뿐. (여기선 함정을 의심하고 검정해 배제했다.)
-- **C2:** m=36의 카오스가 파편화된 것처럼 보임 → 10⁵ 회전에서 사라짐
-- **★ C3a:** T=1000에서 m=36의 dig가 최고 → T=5000에서 씻겨나감
-
-**★ 그리고 C3a의 경우가 가장 교활하다: 그것이 우리가 원하던 답이었다.**
-
-> **★ 원하던 답이 유한시간에서 나오면 더 의심하라.**
-
-**⑦ ★ 눈금 부재 (대비군) — C3a에서 잡음**
-> 대비군 없이 측정값을 해석하지 말라.
-> 도구가 정상 작동하는지 먼저 확인하라.
-
-**★ dig ≈ 1이 "낮다"고 말하려면 "높다"가 뭔지 알아야 한다.**
-**★ 게이트(섬 내부 dig ≈ 12–14)가 그 눈금이다.**
-
-**★ 이것은 D_FL의 잡음 바닥 문제와 같은 구조다.**
-(규칙 궤도조차 폭의 19%까지 "퍼진" 것처럼 보였던 것.)
-
-**⑧ ★ 잘못된 모델로 피팅하기 — sv-1**
-> 확산이 아닌 곳에서 확산계수를 재면, 숫자가 폭발한다.
-
-- **sv-1:** 가속자 창(K=6.4)에서 수송이 탄도(⟨Δp²⟩∼t²)인데 D를 피팅 → **D/D_QL = 618.8** (619배).
-- **★ 진단: R²가 0.9998 → 0.97로 떨어진다** (K=6.4: 0.9714).
-- **★ 교훈: 계수를 재기 전에, 성장 지수를 먼저 확인하라.**
-
-**★★ ⑥(유한시간)과 ⑧(잘못된 모델)은 다른 함정이다. 섞지 말 것:**
-- **⑧ 잘못된 모델 = 가정이 틀렸다** (탄도인데 확산계수를 잼). **시간을 늘려도 안 풀린다.**
-- **⑥ 유한시간 = 시간이 짧았다** (더 오래 돌리면 진실이 드러난다).
-
-### 기존 함정
-- mHW 축 진단 버그 — 잘못된 축을 측정
-- mHW 과도상태 스냅샷 — 수렴 전에 측정
-- Greene residue commensurability — 주기 선택이 궤도를 소멸
-- **대칭선** — 초기조건을 선(line)에서 뽑으면 표본이 오염된다. **두 레포가 독립적으로 만남:**
-  **★ D1 (sv-2/d1, 4bc1fbd): K=3.0에서 격자 μ=2 vs 선 μ=1.**
-  **★ B2 (sv-3, ffe38da): K=6.9에서 θ₀=0 선이 가속자 섬 0개 히트 vs 2D 격자 0.405%.**
-  **★ 단, 적분가능 경우엔 나타나지 않음 (sv-4/C1: 대칭선 0.4866 = 2D 격자 0.4866).**
+1. Implement V_PD (∇·(κ·∇T) = 0, κ∥/κ⊥ = 10⁵–10⁶; ill-conditioned — Paul used
+   PETSc + MUMPS) and complete the three-axis comparison converse-KAM ↔ WBA ↔ V_PD
+   on the same fields, grid, and core. This finishes what Paul left in 2022.
+2. Push the C3a T-convergence further (m=4 is still rising at T=5000: 1.05 → 1.46),
+   though the residual is most likely island-size, not a transport signal.
+3. An island-centred foliation (KMM §5) so converse-KAM can separate island from
+   chaos — which would complete the topology axis; C3a's L-shaped scatter shows
+   quantitatively why it is needed.
 
 ---
 
-## §4.5 — 여름 전체의 논지: 세 축은 서로를 대체하지 못한다
+## Where this stands
 
-이 여름이 반복해서 부딪힌 것:
+The literature stops in the same place. Punjabi & Boozer (2022): turnstile
+robustness to current perturbation — open. Davies et al. (2025): β-robustness of
+unpaired X-points vs island chains — future work. Suzuki (2020): equilibrium with
+net toroidal current — future work. Zhang, Suzuki et al. (2026): self-consistent
+bootstrap — future work. Paul et al. (2022): converse-KAM vs V_PD — four years
+untouched. All of them stop at "what happens when current comes in."
 
-- **D1 ↔ B2:** 수송(μ)과 동역학(dig)이 같은 섬을 서로 다른 원리로 가리켰다. 하나로 둘을 대신할 수 없다.
-- **B4:** WBA가 FTLE보다 cantori를 먼저 감지했다. 같은 "동역학"이라도 지표마다 먼저 보는 것이 다르다.
-- **C1:** converse-KAM은 섬과 카오스를 구분하지 못한다(둘 다 "비존재"). WBA는 구분한다. V_PD는 아직 모른다.
+This summer reached a wall in front of that one:
 
-**★ 셋이 항상 같은 답을 준다면 하나만 있으면 된다. 갈리기 때문에 셋이 필요하다.**
-그리고 그 갈림을 정량화하는 것이 C3다.
+> In a vacuum there is nothing to measure. Confined chaos is a product of finite β.
 
----
+So the next step is not another tool but a finite-β equilibrium — HINT.
 
-## §5 — 현재 툴킷
+The three axes do not substitute for one another, and that is the through-line. D1
+and B2 pointed at the same island by different principles; in Part 2 WBA saw the
+cantori/edge layer before FTLE; in Part 3 converse-KAM cannot separate island from
+chaos while WBA can, and neither sees what V_PD sees. If all three always agreed,
+one would suffice; they diverge, which is why all three are needed — and
+quantifying that divergence is C3.
 
-```
-[위상]     Poincaré, 고정점, Greene residue     ✅ (3D)
-           ★ period-doubling 판정               ✅
-           ★ converse-KAM 3D                    ✅
-              KMM에서 검증 (섬 면적 0.3%)
-              ★ Paul 자기장에 적용 (C2) → 구분 못 함
-[동역학]   ★ WBA                                ✅ (2D + 3D + Paul)
-              ★ 게이트 통과 (섬 12–14 vs 바다 1)
-              ★ Paul 자기장에 적용 (C3a) → 구분 못 함
-              ★ 벡터화 RK4로 200–300배 가속
-           Lyapunov / FTLE                      ✅ (2D + 3D)
-           ★ WBA↔FTLE 상호검증 (corr = −0.53)
-[수송]     확산 지수 μ (표준맵, 2D, sv-2/d1)      ✅
-           3D 진공                              ❌ 원리적 불가 (대상 없음)
-           ★ V_PD                               ⬜ C3b — 마지막 조각
-[자기장]   QUASR 진공                           ✅
-           ★ KMM 모델 (3 예제)                  ✅ ← C0
-           ★ Paul 모델 (m=4/12/36)              ✅ ← C0
-           유한 β (HINT)                        ❌ 히로시마
-```
+And what the toolkit still cannot do: a magnetic field alone does not determine
+transport. For the same field, the plasma state (density, temperature) sets the
+mean free path λ_e, which changes the diffusion coefficient by orders of magnitude
+(Vlad et al. 2002).
 
-**★ 위상 축이 3D에서 완성되었다.** 여름 내내 비어 있던 자리다.
+> L_c is only the numerator. The denominator comes from the plasma.
+
+So a "topology + dynamics → transport" prediction is incomplete in principle — and
+measuring the size of that incompleteness is exactly the V_PD vs converse-KAM
+comparison.
 
 ---
 
-## future_questions
-
-### ★ C3b (다음, 그리고 이 프로젝트의 결말)
-
-1. **★ V_PD 구현.** ∇·(κ·∇T) = 0, κ∥/κ⊥ = 10⁵~10⁶.
-   ★ 무겁다 (ill-conditioned). Paul은 PETSc + MUMPS를 썼다.
-   ★ 그리고 이것이 Paul이 2022년에 남긴 비교를 완성한다.
-
-2. **★ 세 축 비교.** converse-KAM ↔ WBA ↔ V_PD, 같은 자기장·격자·코어에서.
-
-### 도구 정밀도
-
-3. **★ C3a의 T 수렴을 더 밀어볼 것.**
-   m=4가 T=5000에서 아직 오르고 있다 (1.05 → 1.46).
-   ★ T = 10⁴, 10⁵에서는? (IC를 줄여서라도)
-   ★ 다만 잔여 차이가 "섬 크기"로 설명되므로, 수송 신호가 아닐 가능성이 높다.
-
-4. 격자 오프셋 평균 (±0.1%까지) — 비용 16배.
-
-5. **★ 섬 중심 foliation** — converse-KAM이 섬과 카오스를 구분하게 만드는 법.
-   ★ KMM §5가 제안. 그러면 위상 축이 완성된다.
-   ★ 그리고 Stage 2의 L자형 산점도가 그 필요성을 정량적으로 보였다.
-
----
-
-## §6 — 지금 서 있는 곳
-
-### 문헌의 현재 상태 — 전부 같은 곳에서 멈춘다
-
-- **Punjabi & Boozer (2022):** 전류 요동에 대한 turnstile 견고성 — 미해결
-- **Davies et al. (2025):** 짝 없는 X점 vs 섬 사슬의 β 견고성 — 향후 과제
-- **Suzuki (2020):** net-toroidal current 포함 평형 — 향후 과제
-- **Zhang/Suzuki et al. (2026):** bootstrap 자기무모순 처리 — 향후 과제
-- **★ Paul et al. (2022):** converse-KAM vs V_PD 정량 비교 — **4년째 미착수**
-
-**전부 "전류가 들어오면 어떻게 되는가"에서 멈춘다.**
-
-### 이 여름이 도달한 곳
-
-**진공에는 잴 것이 없다.** (§2)
-갇힌 카오스는 유한 β의 산물이다.
-**→ HINT이 필요하다. 히로시마다.**
-
-**★ 그러나 축소 모델에는 잴 것이 있다.** (§3)
-그리고 거기에 **4년째 비어 있는 구멍**이 있다.
-
-**★ 도구는 이제 갖췄다:**
-- 위상: converse-KAM 3D ✅
-- 동역학: WBA ✅
-- 수송: V_PD ❌ ← 마지막 조각
-
-### 아직 못 하는 것
-
-**★ 자기장만으로는 수송이 결정되지 않는다.**
-
-같은 자기장이라도 플라즈마 상태(밀도·온도)가 λ_e를 정하고,
-그것이 확산계수를 몇 자릿수 바꾼다 (Vlad et al. 2002).
-
-**L_c는 분자일 뿐이고, 분모(λ_e)는 플라즈마에서 온다.**
-
-**★ 즉 "위상·동역학 → 수송" 예측은 원리적으로 불완전하다.**
-그리고 그 불완전함의 크기를 재는 것이 — V_PD와 converse-KAM의 비교다.
+*A Korean version of this document is preserved at
+[`summer-toolkit-three-axes.ko.md`](summer-toolkit-three-axes.ko.md).*
