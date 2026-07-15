@@ -1,6 +1,6 @@
 # Magnetic Field Line Chaos — Summer 2026
 
-**Kim Minhyeok (김민혁), Sejong University**
+**Kim Minhyuk (김민혁), Sejong University**
 
 Reproduction and verification across five repositories. No new physics is claimed;
 the value is in the measurement discipline and in one negative result, stated
