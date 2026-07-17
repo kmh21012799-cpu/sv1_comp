@@ -770,7 +770,8 @@ q|m 공명 제약 때문에 m=20은 convergent 2/3, 나머지는 3/5다.
            ★ WBA↔FTLE 상호검증 (corr = −0.53)
 [수송]     확산 지수 μ (표준맵, 2D, sv-2/d1)      ✅
            3D 진공                              ❌ 원리적 불가 (대상 없음)
-           ★ V_PD                               ⬜ C3b — 마지막 조각
+           ★ V_PD                               ✅ C3b 완료 (sv-4 8a52ca1)
+           ★ turnstile flux ΔW                  ✅ sv-5 add102b (가설 supported, q≤5)
 [자기장]   QUASR 진공                           ✅
            ★ KMM 모델 (3 예제)                  ✅ ← C0
            ★ Paul 모델 (m=4/12/36)              ✅ ← C0
@@ -783,13 +784,22 @@ q|m 공명 제약 때문에 m=20은 convergent 2/3, 나머지는 3/5다.
 
 ## future_questions
 
-### ★ C3b (다음, 그리고 이 프로젝트의 결말)
+### ★ C3b는 완료 — 남은 다음
 
-1. **★ V_PD 구현.** ∇·(κ·∇T) = 0, κ∥/κ⊥ = 10⁵~10⁶.
-   ★ 무겁다 (ill-conditioned). Paul은 PETSc + MUMPS를 썼다.
-   ★ 그리고 이것이 Paul이 2022년에 남긴 비교를 완성한다.
+**★ C3b 완료.** V_PD를 구현했고 (∇·(κ·∇T) = 0, κ∥/κ⊥ = 10⁵~10⁶,
+ill-conditioned — Paul은 PETSc + MUMPS 사용), converse-KAM ↔ WBA ↔ V_PD
+세 축 비교를 같은 자기장·격자·코어에서 끝냈다 (sv-4 `8a52ca1`).
+★ Paul이 2022년에 남긴 비교가 이로써 완성됐다.
+그 위에서 turnstile flux(sv-5 `add102b`)가 cantori 가설을 직접 측정했다
+→ **supported (q≤5), proven 아님.**
 
-2. **★ 세 축 비교.** converse-KAM ↔ WBA ↔ V_PD, 같은 자기장·격자·코어에서.
+**★ 남은 다음:**
+
+- **★ turnstile flux의 q→∞ 극한.** q≤5까지만 측정됐다
+  (q=8에서 residue ~200 — cantorus 극한 미도달; q|m 공명으로 m=20은 2/3,
+  나머지는 3/5). ΔW를 극한까지 따라가는 것은 열려 있다.
+- **★ 섬 중심 foliation** (아래 "도구 정밀도" 참조) — 위상 축을 완성한다.
+- **★ 유한 β 평형 (HINT)** — §6. 처방된 자기장을 넘어서는 유일한 다음 단계.
 
 ### 도구 정밀도
 
@@ -830,7 +840,7 @@ q|m 공명 제약 때문에 m=20은 convergent 2/3, 나머지는 3/5다.
 **★ 도구는 이제 갖췄다:**
 - 위상: converse-KAM 3D ✅
 - 동역학: WBA ✅
-- 수송: V_PD ❌ ← 마지막 조각
+- 수송: V_PD ✅ (C3b 완료) + turnstile flux ΔW (sv-5, 가설 supported q≤5)
 
 ### 아직 못 하는 것
 
