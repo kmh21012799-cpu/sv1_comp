@@ -602,23 +602,32 @@ commensurability, where the period chosen annihilates the orbit.)*
 | | Lyapunov / FTLE | done (2D + 3D); cross-validated with WBA (corr = −0.53) |
 | **Transport** | diffusion exponent μ (standard map) | done (sv-2/d1) |
 | | 3D vacuum | not possible in principle (nothing to measure) |
-| | V_PD | not done — C3b, the last piece |
+| | V_PD | done (C3b, sv-4 `8a52ca1`) — three-axis comparison complete; V_PD/ΔT distinguish the four fields where converse-KAM and WBA do not |
+| | turnstile flux ΔW | done (sv-5 `add102b`) — orders with transport; cantori hypothesis supported to q ≤ 5 |
 | **Field** | QUASR vacuum | done |
 | | KMM model (3 examples), Paul model (m=4/12/36) | done (C0) |
 | | finite β (HINT) | not done — Hiroshima |
 
 The topology axis is now complete in 3D — a slot that was empty all summer.
 
-## Next steps (C3b)
+## Next steps
 
-1. Implement V_PD (∇·(κ·∇T) = 0, κ∥/κ⊥ = 10⁵–10⁶; ill-conditioned — Paul used
-   PETSc + MUMPS) and complete the three-axis comparison converse-KAM ↔ WBA ↔ V_PD
-   on the same fields, grid, and core. This finishes what Paul left in 2022.
-2. Push the C3a T-convergence further (m=4 is still rising at T=5000: 1.05 → 1.46),
-   though the residual is most likely island-size, not a transport signal.
-3. An island-centred foliation (KMM §5) so converse-KAM can separate island from
+C3b is done: V_PD was implemented (∇·(κ·∇T) = 0, κ∥/κ⊥ = 10⁵–10⁶; ill-conditioned
+— Paul used PETSc + MUMPS) and the three-axis comparison converse-KAM ↔ WBA ↔ V_PD
+completed on the same fields, grid, and core (sv-4 `8a52ca1`), finishing what Paul
+left in 2022; the turnstile flux (sv-5 `add102b`) then measured the cantori
+hypothesis directly — supported to q ≤ 5. What remains:
+
+1. The q → ∞ limit of the turnstile flux. It is measured only through q ≤ 5
+   (residues ~200 by q=8, so the cantorus limit is not reached), and the q|m
+   resonance rule puts m=20 on convergent 2/3 while the others use 3/5; following
+   ΔW to convergence is open.
+2. An island-centred foliation (KMM §5) so converse-KAM can separate island from
    chaos — which would complete the topology axis; C3a's L-shaped scatter shows
    quantitatively why it is needed.
+3. A finite-β equilibrium (HINT). Every field here is prescribed and confined
+   chaos is a product of finite β, so the next step is not another tool but
+   pressure-driven currents.
 
 ---
 
