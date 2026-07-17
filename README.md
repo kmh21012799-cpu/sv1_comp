@@ -2,7 +2,7 @@
 
 **Kim Minhyuk (김민혁), Sejong University**
 
-Reproduction and verification across five repositories. No new physics is claimed;
+Reproduction and verification across six repositories. No new physics is claimed;
 the value is in the measurement discipline and in one negative result, stated
 plainly.
 
@@ -71,6 +71,21 @@ analytic 0.4928, ratio 1.003) and applies it to Paul's four critical-overlap fie
 transport do. This performs the converse-KAM vs V_PD comparison that Paul, Hudson &
 Helander (2022) reserved "for future publication" and left untouched for four years.
 
+### [sv-5](https://github.com/kmh21012799-cpu/sv-5) — Turnstile flux (ΔW)
+
+Measures the turnstile flux of MacKay–Meiss–Percival (1984) as the action
+difference ΔW = W_minimax − W_minimizing of the periodic orbits at noble
+convergents. Validated on the standard map — flux ≈ 0 below K_c ≈ 0.9716 and
+positive above, Greene's residue criterion reproduced, flux-scaling exponent
+β ≈ 2.85 against MacKay's ≈ 3.0 — then applied to Paul's four fields: ΔW falls
+monotonically over two decades from m = 4 to m = 36 (6.46×10⁻³ → 8.41×10⁻⁵),
+ordering with the transport metrics (corr(log ΔW, V_PD) = +0.92,
+corr(log ΔW, ΔT) = −0.98). The most broken field has the strongest cantori. This
+makes the cantori hypothesis **supported, not proven**: the orbits are trackable
+only to q ≤ 5 (residues ~200 by q = 8, so the q → ∞ cantorus limit is not
+reached), and the q|m resonance rule puts m = 20 on convergent 2/3 while the
+others use 3/5.
+
 ## The result
 
 Both times the question was asked — in the standard-map accelerator window (sv-1)
@@ -84,10 +99,18 @@ The reason is the same in both places: those indicators ask "is this locally
 chaotic," not "where does the heat go." Transport is set by global structure, and
 by the plasma state that a vacuum field does not contain.
 
+As for *why* converse-KAM misses it, there is now direct evidence: the turnstile
+flux (sv-5) shows that the fields converse-KAM cannot tell apart are cleanly
+separated by cantorus strength, and that strength orders with the transport. The
+cantori hypothesis is supported (to q ≤ 5) — the remaining open problem is the
+q → ∞ limit, not whether the comparison can be made.
+
 ## What remains
 
-- **The cantori-blindness hypothesis is still a hypothesis** — it needs V_PD
-  implemented directly (C3b), not read from Paul's figures.
+- **The q → ∞ limit.** The turnstile flux is measured only through q ≤ 5 (at
+  critical overlap the q = 8 convergent orbits have residues ~200); following ΔW
+  to the cantorus limit — and resolving the q|m resonance constraint that puts
+  m = 20 on a different convergent (2/3) than the others (3/5) — remains open.
 - **An island-centred foliation** (KMM §5) would let converse-KAM separate island
   from chaos, completing the topology axis.
 - **Finite β.** Confined chaos is a product of finite β, so measuring transport

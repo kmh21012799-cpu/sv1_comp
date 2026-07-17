@@ -499,10 +499,18 @@ the quantitative form of the summer's thesis:
 > Broken is not the same as leaking — and a tool that measures breaking cannot
 > measure leaking.
 
-The "why" is still open. The cantori-blindness hypothesis remains a hypothesis,
-because V_PD has not been implemented here (the V_PD values are read from Paul's
-figures, not our own computation). That is C3b, and it completes the comparison
-Paul left in 2022.
+The "why" now has direct evidence. V_PD has since been implemented directly
+(C3b, sv-4 `8a52ca1`) — the distinction is confirmed by our own computation, no
+longer read off Paul's figures — and the turnstile flux (sv-5, `add102b`)
+measures the cantori hypothesis itself: ΔW falls monotonically from m=4 to m=36
+over two decades (6.46×10⁻³ → 8.41×10⁻⁵), ordering with the transport metrics
+(corr(log ΔW, V_PD) = +0.92, corr(log ΔW, ΔT) = −0.98). The most broken field
+has the strongest cantori. That makes the hypothesis supported — not proven, and
+the caveat matters: the orbits are trackable only to q ≤ 5 (residues ~200 by
+q = 8, so the q → ∞ cantorus limit is not reached), and the q|m resonance rule
+forces m=20 onto convergent 2/3 while the others sit at 3/5. The ordering is
+robust to both choices. What remains open is the q → ∞ limit — the comparison
+Paul left in 2022 is done.
 
 ---
 
